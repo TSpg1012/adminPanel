@@ -1,0 +1,23 @@
+{
+  "name": "adminpanel",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TSpg1012/adminPanel.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TSpg1012/adminPanel/issues"
+  },
+  "homepage": "https://github.com/TSpg1012/adminPanel#readme",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
