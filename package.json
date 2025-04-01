@@ -18,6 +18,9 @@
   },
   "homepage": "https://github.com/TSpg1012/adminPanel#readme",
   "dependencies": {
-    "express": "^5.1.0"
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "mongodb": "^6.15.0",
+    "mongoose": "^8.13.1"
   }
 }
