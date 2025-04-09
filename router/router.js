@@ -2,6 +2,8 @@ let router = require("express").Router();
 
 const studentController = require("../controller/studentController");
 const teacherController = require("../controller/teacherController");
+const userController = require("../controller/userController");
+const adminController = require("../controller/adminController");
 
 router.get("/students", studentController.getAllStudents);
 router.post("/students/add", studentController.addStudent);
@@ -12,5 +14,9 @@ router.get("/teachers", teacherController.getAllTeachers);
 router.post("/teachers/add", teacherController.addTeacher);
 router.put("/teachers/update/:id", teacherController.updateTeacher);
 router.delete("/teachers/delete/:id", teacherController.deleteTeacherById);
+
+router.post("/login", userController.loginUser);
+
+router.post("/admin/addUser", adminController.addUser);
 
 module.exports = router;
