@@ -2,12 +2,77 @@ const mongoose = require("mongoose")
 
 const teacherSchema = mongoose.Schema(
     {
-        id: Number,
-        name: String,
-        age: Number,
-        fincode: String,
-        mobile_number: Number,
-        password: String,
+        role: {
+            type: String,
+        },
+        fullname: {
+            type: String,
+            required: true,
+          },
+        gmail: {
+            type: String,
+            required: true,
+            unique: true,
+            match: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+        },
+        password: {
+            type: String,
+            required: true,
+            unique: true,
+        },
+        id: {
+            type: Number,
+            unique: true,
+        },
+        birthday: {
+            type: Date,
+            required: true,
+        },
+        FIN: {
+            type: String,
+            required: true,
+            unique: true,
+        },
+        serieNumber: {
+            type: String,
+            required: true,
+            unique: true,
+        },
+        mobileNumber: {
+            type: String,
+            match: /^\+994\s\d{2}\s\d{3}\s\d{2}\s\d{2}$/,
+            required: true,
+        },
+        workExperience:{
+            type: String,
+            required: true,
+        },
+        maritalStatus:{
+            type: String,
+            enum: ["Married","Single"],
+            required: true,
+        },
+        department: {
+            type: String,
+            enum: ["AZ", "EN", "RU"],
+            required: true,
+        },
+        salary:{
+            amount:{
+                type: Number,
+                required: true,
+            },
+            SalaryType:{
+                type: String,
+                enum:["Monthly","Hourly","Weakly","Yearly"],
+                required:true,
+            }
+        },
+        class: [
+            {
+              type: String,
+            },
+        ],
     },
     {
         collection: "Teachers",
@@ -17,6 +82,3 @@ const teacherSchema = mongoose.Schema(
 const Teacher = mongoose.model("Teacher",teacherSchema);
 
 module.exports = Teacher;
-
-
-
