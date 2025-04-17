@@ -1,10 +1,14 @@
 const Classes = require("../models/classesModel");
 
 const addClass = async(req,res)=>{
-    const{className} = req.body
+    const{className,classId} = req.body
 
     if (!className || className.trim() === "") {
         return res.status(400).json({ message: "Class name is required" });
+    }
+
+    if (!classId || classId.trim() === "") {
+        return res.status(400).json({ message: "Class ID is required" });
     }
 
     try{
@@ -16,6 +20,7 @@ const addClass = async(req,res)=>{
 
         const newClass = new Classes({
             className: className.trim(),
+            classId: classId,
         });
 
         await newClass.save();
