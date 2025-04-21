@@ -17,9 +17,12 @@ router.put("/teachers/update/:id", teacherController.updateTeacher);
 router.delete("/teachers/delete/:id", teacherController.deleteTeacherById);
 
 router.post("/login", userController.loginUser);
+router.post("/forgot-password", userController.forgotPassword);
+router.post("/verify-code", userController.verifyResetCode);
+router.post("/reset-password", userController.resetPassword);
 
 router.post("/admin/addUser", adminController.addUser);
 
-router.post("/classes/add",classesController.addClass);
+router.post("/classes/add", classesController.addClass);
 
 module.exports = router;
