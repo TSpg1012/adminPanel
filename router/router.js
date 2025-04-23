@@ -22,6 +22,8 @@ router.post("/verify-code", userController.verifyResetCode);
 router.post("/reset-password", userController.resetPassword);
 
 router.post("/admin/addUser", adminController.addUser);
+router.post("/admin/editUser", adminController.editUser);
+router.post("/admin/deleteUser", adminController.deleteUser);
 
 router.get("/classes", classesController.getAllClasses);
 router.post("/classes/add",classesController.addClass);

@@ -72,6 +72,61 @@ const addUser = async (req, res) => {
   }
 };
 
+const editUser = async (req, res) => {
+  const { id, role, ...updates } = req.body;
+
+  try {
+    let updated;
+
+    const filter = { id: parseInt(id) };
+
+    if (role === "admin") {
+      updated = await Admin.findOneAndUpdate(filter, updates, { new: true });
+    } else if (role === "student") {
+      updated = await Student.findOneAndUpdate(filter, updates, { new: true });
+    } else if (role === "teacher") {
+      updated = await Teacher.findOneAndUpdate(filter, updates, { new: true });
+    } else {
+      return res.status(400).send("Invalid role");
+    }
+
+    if (!updated) return res.status(404).send("User not found");
+
+    res.status(200).json({ message: "User updated", updated });
+  } catch (err) {
+    console.error("Error editing user:", err);
+    res.status(500).send("Server error");
+  }
+};
+
+const deleteUser = async (req, res) => {
+  const { id, role } = req.body;
+
+  try {
+    let deleted;
+    const filter = { id: parseInt(id) };
+
+    if (role === "admin") {
+      deleted = await Admin.findOneAndDelete(filter);
+    } else if (role === "student") {
+      deleted = await Student.findOneAndDelete(filter);
+    } else if (role === "teacher") {
+      deleted = await Teacher.findOneAndDelete(filter);
+    } else {
+      return res.status(400).send("Invalid role");
+    }
+
+    if (!deleted) return res.status(404).send("User not found");
+
+    res.status(200).json({ message: "User deleted", deleted });
+  } catch (err) {
+    console.error("Error deleting user:", err);
+    res.status(500).send("Server error");
+  }
+};
+
 module.exports = {
   addUser,
+  editUser,
+  deleteUser,
 };
