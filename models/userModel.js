@@ -11,12 +11,15 @@ const userSchema = mongoose.Schema(
     password: {
       type: String,
       required: true,
+      match: /^(?=.*[A-Z])(?=.*[0-9!@#$%^&*])(?=.{8,})/,
     },
     role: {
       type: String,
       enum: ["admin", "student", "teacher"],
       required: true,
     },
+    resetCode: String,
+    resetCodeExpires: Date,
   },
   {
     collection: "Users",

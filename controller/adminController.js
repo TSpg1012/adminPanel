@@ -23,7 +23,6 @@ const addUser = async (req, res) => {
       role,
     });
 
-
     await newUser.save();
 
     if (role === "admin") {

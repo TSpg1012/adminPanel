@@ -22,8 +22,8 @@ const notificationSchema = new mongoose.Schema(
       required: true,
     },
     message: {
-      type: String,
-      required: true,
+      previous: { type: String },
+      current: { type: String, required: true },
     },
     target: {
       type: String,
@@ -34,6 +34,9 @@ const notificationSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    expireAt: {
+      type: Date,
+    },
     createdAt: {
       type: Date,
       default: Date.now,
@@ -43,6 +46,8 @@ const notificationSchema = new mongoose.Schema(
     collection: "Notification",
   }
 );
+
+notificationSchema.index({ expireAt: 1 }, { expireAfterSeconds: 0 });
 
 const Notification = mongoose.model("Notification", notificationSchema);
 
