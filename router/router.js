@@ -20,6 +20,9 @@ router.post("/login", userController.loginUser);
 
 router.post("/admin/addUser", adminController.addUser);
 
+router.get("/classes", classesController.getAllClasses);
 router.post("/classes/add",classesController.addClass);
+router.put("/classes/update/:id",classesController.updateClass);
+router.delete("/classes/delete/:id",classesController.deleteClass);
 
 module.exports = router;
