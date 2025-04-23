@@ -23,13 +23,9 @@ router.post("/reset-password", userController.resetPassword);
 
 router.post("/admin/addUser", adminController.addUser);
 
-<<<<<<< HEAD
 router.get("/classes", classesController.getAllClasses);
 router.post("/classes/add",classesController.addClass);
 router.put("/classes/update/:id",classesController.updateClass);
 router.delete("/classes/delete/:id",classesController.deleteClass);
-=======
-router.post("/classes/add", classesController.addClass);
->>>>>>> a2256c5981ea749deadc1f9f6b28d5787d1b92b6
 
 module.exports = router;
