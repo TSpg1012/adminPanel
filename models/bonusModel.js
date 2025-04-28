@@ -8,11 +8,16 @@ const bonusSchema = new mongoose.Schema(
       required: true,
     },
 
+    fullname: {
+      type: String,
+      ref: "Teacher",
+      required: true,
+    },
+
     amount: {
       type: Number,
       required: true,
     },
-
     comment: {
       type: String,
     },

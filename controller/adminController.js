@@ -23,8 +23,6 @@ const addUser = async (req, res) => {
       role,
     });
 
-    await newUser.save();
-
     if (role === "admin") {
       if (!fullname) {
         return res.status(400).send("Fullname is required for admin");
@@ -62,6 +60,8 @@ const addUser = async (req, res) => {
       });
       await newTeacher.save();
     }
+
+    await newUser.save(); 
 
     return res
       .status(201)
@@ -129,4 +129,5 @@ module.exports = {
   addUser,
   editUser,
   deleteUser,
+  
 };
