@@ -7,6 +7,12 @@ const fineSchema = new mongoose.Schema(
       ref: "Teacher",
       required: true,
     },
+    
+    fullname: {
+      type: String,
+      ref: "Teacher",
+      required: true, 
+    },
 
     type: {
       type: String,
