@@ -6,6 +6,7 @@ const userController = require("../controller/userController");
 const adminController = require("../controller/adminController");
 const classesController = require("../controller/classesController");
 const bonusController = require("../controller/bonusController");
+const fineController = require("../controller/fineController");
 
 router.get("/students", studentController.getAllStudents);
 router.post("/students/add", studentController.addStudent);
@@ -35,5 +36,10 @@ router.get("/bonus", bonusController.getBonuses);
 router.post("/bonus", bonusController.addBonus);
 router.delete("/bonus/:id", bonusController.deleteBonus);
 router.put("/bonus/:id", bonusController.editBonus);
+
+router.get("/fine/search", fineController.getAllFines);
+router.post("/fine/add", fineController.addFine);
+router.put("/fine/update/:id", fineController.updateFine);
+router.delete("/fine/delete/:id", fineController.deleteFine);
 
 module.exports = router;
