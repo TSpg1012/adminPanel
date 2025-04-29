@@ -39,10 +39,24 @@ const lessonSchema = new mongoose.Schema(
       enum: ["unviewed", "confirmed", "canceled"],
       default: "unviewed",
     },
+    tableId: {
+      type: String,
+    },
+    tableType: {
+      type: String,
+      enum: ["main", "current"],
+      required: true,
+    },
     students: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Student",
+        studentId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Student",
+          required: true,
+        },
+        fullname: {
+          type: String,
+        },
       },
     ],
   },

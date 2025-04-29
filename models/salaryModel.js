@@ -27,6 +27,10 @@ const salarySchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    salaryType: {
+      type: String,
+      required: true,
+    },
     totalSalary: {
       type: Number,
     },
