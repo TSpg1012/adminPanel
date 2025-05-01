@@ -30,9 +30,11 @@ const lessonSchema = new mongoose.Schema(
     },
     teacherNote: {
       type: String,
+      default: "",
     },
     tasks: {
       type: String,
+      default: "",
     },
     status: {
       type: String,
