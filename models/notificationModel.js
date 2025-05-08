@@ -21,10 +21,6 @@ const notificationSchema = new mongoose.Schema(
       ],
       required: true,
     },
-    message: {
-      previous: { type: String },
-      current: { type: String, required: true },
-    },
     target: {
       type: String,
       enum: ["student", "teacher", "all"],
@@ -33,9 +29,6 @@ const notificationSchema = new mongoose.Schema(
     isRead: {
       type: Boolean,
       default: false,
-    },
-    expireAt: {
-      type: Date,
     },
     createdAt: {
       type: Date,
