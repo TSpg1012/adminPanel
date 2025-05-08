@@ -49,7 +49,6 @@ router.post("/lesson", lessonController.addLesson);
 router.put("/lesson/:id", lessonController.editLesson);
 router.delete("/lesson/:id", lessonController.deleteLesson);
 
-module.exports = router;
 router.post("/notifications/add", notificationController.createNotification);
 router.get("/notifications", notificationController.getNotifications);
 router.delete("/notifications/delete/:id", notificationController.deleteNotification);
