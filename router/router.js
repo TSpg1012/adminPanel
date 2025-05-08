@@ -6,6 +6,7 @@ const userController = require("../controller/userController");
 const adminController = require("../controller/adminController");
 const classesController = require("../controller/classesController");
 const fineController = require("../controller/fineController");
+const notificationController = require("../controller/notificationController");
 
 router.get("/students", studentController.getAllStudents);
 router.post("/students/add", studentController.addStudent);
@@ -35,5 +36,10 @@ router.get("/fine/search", fineController.getAllFines);
 router.post("/fine/add", fineController.addFine);
 router.put("/fine/update/:id", fineController.updateFine);
 router.delete("/fine/delete/:id", fineController.deleteFine);
+
+router.post("/notifications/add", notificationController.createNotification);
+router.get("/notifications", notificationController.getNotifications);
+router.delete("/notifications/delete/:id", notificationController.deleteNotification);
+router.put("/notifications/update/:id", notificationController.updateNotification)
 
 module.exports = router;
