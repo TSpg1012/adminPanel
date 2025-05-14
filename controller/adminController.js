@@ -2,6 +2,8 @@ const Admin = require("../models/adminModel");
 const User = require("../models/userModel");
 const Student = require("../models/studentModel");
 const Teacher = require("../models/teacherModel");
+const Salary = require("../models/salaryModel");
+const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 
 const addUser = async (req, res) => {
@@ -59,9 +61,34 @@ const addUser = async (req, res) => {
         userId: newUser._id,
       });
       await newTeacher.save();
+
+      let totalSalary = 0;
+      if (rest.salary.salaryType === "Monthly") {
+        totalSalary = rest.salary.amount + (rest.bonus || 0);
+      } else if (rest.salary.salaryType === "Hourly") {
+        totalSalary =
+          rest.salary.amount * (rest.confirmed || 0) + (rest.bonus || 0);
+      } else if (rest.salary.salaryType === "Weakly") {
+        const weeks = Math.ceil((rest.confirmed || 0) / 5);
+        totalSalary = rest.salary.amount * weeks + (rest.bonus || 0);
+      } else if (rest.salary.salaryType === "Yearly") {
+        const months = Math.ceil((rest.confirmed || 0) / 20);
+        totalSalary = (rest.salary.amount / 12) * months + (rest.bonus || 0);
+      }
+
+      const salaryDoc = new Salary({
+        teacherId: newTeacher._id,
+        teacherName: fullname,
+        salary: rest.salary.amount,
+        salaryType: rest.salary.salaryType,
+        totalSalary: totalSalary,
+        bonus: [],
+      });
+
+      salaryDoc.save();
     }
 
-    await newUser.save(); 
+    await newUser.save();
 
     return res
       .status(201)
@@ -73,12 +100,13 @@ const addUser = async (req, res) => {
 };
 
 const editUser = async (req, res) => {
-  const { id, role, ...updates } = req.body;
+  const id = req.params;
+  const { role, ...updates } = req.body;
 
   try {
     let updated;
-
-    const filter = { id: parseInt(id) };
+    const { ObjectId } = require("mongoose").Types;
+    const filter = { _id: new ObjectId(id) };
 
     if (role === "admin") {
       updated = await Admin.findOneAndUpdate(filter, updates, { new: true });
@@ -86,6 +114,37 @@ const editUser = async (req, res) => {
       updated = await Student.findOneAndUpdate(filter, updates, { new: true });
     } else if (role === "teacher") {
       updated = await Teacher.findOneAndUpdate(filter, updates, { new: true });
+
+      console.log(updated);
+      if (updates.salary && updated) {
+        const confirmed = updates.confirmed || 0;
+        const bonus = updates.bonus || 0;
+        const salaryAmount = updates.salary.amount;
+        const salaryType = updates.salary.salaryType;
+
+        let totalSalary = 0;
+        if (salaryType === "Monthly") {
+          totalSalary = salaryAmount + bonus;
+        } else if (salaryType === "Hourly") {
+          totalSalary = salaryAmount * confirmed + bonus;
+        } else if (salaryType === "Weakly") {
+          const weeks = Math.ceil(confirmed / 5);
+          totalSalary = salaryAmount * weeks + bonus;
+        } else if (salaryType === "Yearly") {
+          const months = Math.ceil(confirmed / 20);
+          totalSalary = (salaryAmount / 12) * months + bonus;
+        }
+
+        await Salary.findOneAndUpdate(
+          { teacherId: updated._id },
+          {
+            salary: salaryAmount,
+            salaryType: salaryType,
+            totalSalary: totalSalary,
+          },
+          { new: true }
+        );
+      }
     } else {
       return res.status(400).send("Invalid role");
     }
@@ -100,11 +159,13 @@ const editUser = async (req, res) => {
 };
 
 const deleteUser = async (req, res) => {
-  const { id, role } = req.body;
+  const id = req.params;
+  const { role } = req.body;
 
   try {
     let deleted;
-    const filter = { id: parseInt(id) };
+    const { ObjectId } = require("mongoose").Types;
+    const filter = { _id: new ObjectId(id) };
 
     if (role === "admin") {
       deleted = await Admin.findOneAndDelete(filter);
@@ -112,6 +173,10 @@ const deleteUser = async (req, res) => {
       deleted = await Student.findOneAndDelete(filter);
     } else if (role === "teacher") {
       deleted = await Teacher.findOneAndDelete(filter);
+
+      if (deleted) {
+        await Salary.findOneAndDelete({ teacherId: deleted._id });
+      }
     } else {
       return res.status(400).send("Invalid role");
     }
@@ -129,5 +194,4 @@ module.exports = {
   addUser,
   editUser,
   deleteUser,
-  
 };

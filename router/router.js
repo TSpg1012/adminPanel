@@ -26,8 +26,8 @@ router.post("/verify-code", userController.verifyResetCode);
 router.post("/reset-password", userController.resetPassword);
 
 router.post("/admin/addUser", adminController.addUser);
-router.post("/admin/editUser", adminController.editUser);
-router.post("/admin/deleteUser", adminController.deleteUser);
+router.put("/admin/editUser/:id", adminController.editUser);
+router.delete("/admin/deleteUser/:id", adminController.deleteUser);
 
 router.get("/classes", classesController.getAllClasses);
 router.post("/classes/add", classesController.addClass);
@@ -51,7 +51,13 @@ router.delete("/lesson/:id", lessonController.deleteLesson);
 
 router.post("/notifications/add", notificationController.createNotification);
 router.get("/notifications", notificationController.getNotifications);
-router.delete("/notifications/delete/:id", notificationController.deleteNotification);
-router.put("/notifications/update/:id", notificationController.updateNotification)
+router.delete(
+  "/notifications/delete/:id",
+  notificationController.deleteNotification
+);
+router.put(
+  "/notifications/update/:id",
+  notificationController.updateNotification
+);
 
 module.exports = router;

@@ -1,5 +1,6 @@
 const Bonus = require("../models/bonusModel");
 const Teacher = require("../models/teacherModel");
+const Stimulation = require("../models/stimulationModel");
 
 const getBonuses = async (req, res) => {
   const { fullname, startDate, endDate } = req.query;
@@ -19,7 +20,6 @@ const getBonuses = async (req, res) => {
     }
 
     const bonuses = await Bonus.find(filter).sort({ date: 1 });
-    console.log(bonuses);
 
     res.status(200).json(bonuses);
   } catch (err) {
@@ -34,6 +34,12 @@ const addBonus = async (req, res) => {
   try {
     const bonus = new Bonus({ teacherId, amount, comment, fullname });
     await bonus.save();
+
+    await Stimulation.findOneAndUpdate(
+      { teacherId },
+      { $addToSet: { bonuses: bonus._id } },
+      { upsert: true, new: true }
+    );
 
     res.status(201).json({ message: "Bonus added", bonus });
   } catch (err) {
@@ -52,6 +58,11 @@ const deleteBonus = async (req, res) => {
       return res.status(404).send("Bonus not found");
     }
 
+    await Stimulation.findOneAndDelete(
+      { teacherId: deletedBonus.teacherId },
+      { $pull: { bonuses: deletedBonus._id } }
+    );
+    
     res.status(200).json({ message: "Bonus deleted" });
   } catch (err) {
     console.error("Error deleting bonus:", err);

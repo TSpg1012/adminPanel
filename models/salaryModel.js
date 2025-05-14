@@ -21,7 +21,7 @@ const salarySchema = new mongoose.Schema(
     },
     participantCount: {
       type: Number,
-      required: true,
+      default: 0,
     },
     salary: {
       type: Number,
@@ -35,8 +35,22 @@ const salarySchema = new mongoose.Schema(
       type: Number,
     },
     bonus: {
-      type: Number,
-      default: 0,
+      type: [
+        {
+          amount: {
+            type: Number,
+            required: true,
+          },
+          date: {
+            type: Date,
+            default: Date.now,
+          },
+          comment: {
+            type: String,
+          },
+        },
+      ],
+      default: [],
     },
   },
   {

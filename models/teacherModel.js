@@ -73,11 +73,47 @@ const teacherSchema = mongoose.Schema(
         required: true,
       },
     },
-    class: [
-      {
-        type: String,
-      },
-    ],
+    class: {
+      type: [
+        {
+          name: {
+            type: String,
+            required: true,
+          },
+          confirmed: {
+            type: Number,
+            default: 0,
+          },
+          canceled: {
+            type: Number,
+            default: 0,
+          },
+          participantCount: {
+            type: Number,
+            default: 0,
+          },
+        },
+      ],
+      default: [],
+    },
+    bonus: {
+      type: [
+        {
+          amount: {
+            type: Number,
+            required: true,
+          },
+          date: {
+            type: Date,
+            default: Date.now,
+          },
+          comment: {
+            type: String,
+          },
+        },
+      ],
+      default: [],
+    },
   },
   {
     collection: "Teachers",
