@@ -93,6 +93,7 @@ const addUser = async (req, res) => {
         salaryType: rest.salary.salaryType,
         totalSalary: totalSalary,
         bonus: [],
+        fine: [],
       });
 
       salaryDoc.save();
@@ -123,10 +124,10 @@ const editUser = async (req, res) => {
     } else if (role === "teacher") {
       updated = await Teacher.findOneAndUpdate(filter, updates, { new: true });
 
-      console.log(updated);
       if (updates.salary && updated) {
         const confirmed = updates.confirmed || 0;
         const bonus = updates.bonus || 0;
+        const fine = updates.fine || 0;
         const salaryAmount = updates.salary.amount;
         const salaryType = updates.salary.salaryType;
 
@@ -135,7 +136,7 @@ const editUser = async (req, res) => {
           totalSalary = salaryAmount + bonus;
         } else if (salaryType === "Hourly") {
           totalSalary = salaryAmount * confirmed + bonus;
-        } else if (salaryType === "Weakly") {
+        } else if (salaryType === "Weekly") {
           const weeks = Math.ceil(confirmed / 5);
           totalSalary = salaryAmount * weeks + bonus;
         } else if (salaryType === "Yearly") {

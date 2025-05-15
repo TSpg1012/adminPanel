@@ -36,9 +36,27 @@ const salarySchema = new mongoose.Schema(
     bonus: {
       type: [
         {
+          _id: mongoose.Schema.Types.ObjectId,
           amount: {
             type: Number,
-            required: true,
+          },
+          date: {
+            type: Date,
+            default: Date.now,
+          },
+          comment: {
+            type: String,
+          },
+        },
+      ],
+      default: [],
+    },
+    fine: {
+      type: [
+        {
+          _id: mongoose.Schema.Types.ObjectId,
+          amount: {
+            type: Number,
           },
           date: {
             type: Date,

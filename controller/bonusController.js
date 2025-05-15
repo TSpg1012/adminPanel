@@ -1,6 +1,7 @@
 const Bonus = require("../models/bonusModel");
 const Teacher = require("../models/teacherModel");
 const Stimulation = require("../models/stimulationModel");
+const Salary = require("../models/salaryModel");
 
 const getBonuses = async (req, res) => {
   const { fullname, startDate, endDate } = req.query;
@@ -29,17 +30,34 @@ const getBonuses = async (req, res) => {
 };
 
 const addBonus = async (req, res) => {
-  const { teacherId, amount, comment, fullname } = req.body;
+  const { id } = req.params;
+  const { amount, comment, fullname } = req.body;
 
   try {
-    const bonus = new Bonus({ teacherId, amount, comment, fullname });
+    const salary = await Salary.findById(id);
+    if (!salary) {
+      return res.status(404).json({ message: "Salary record not found" });
+    }
+
+    const bonus = new Bonus({
+      teacherId: id,
+      amount,
+      comment,
+      fullname,
+    });
+
     await bonus.save();
 
-    await Stimulation.findOneAndUpdate(
-      { teacherId },
-      { $addToSet: { bonuses: bonus._id } },
-      { upsert: true, new: true }
-    );
+    salary.bonus.push({
+      _id: bonus._id,
+      amount: bonus.amount,
+      comment: bonus.comment,
+      date: bonus.date,
+    });
+
+    salary.totalSalary = (salary.totalSalary || 0) + amount;
+
+    await salary.save();
 
     res.status(201).json({ message: "Bonus added", bonus });
   } catch (err) {
@@ -52,17 +70,17 @@ const deleteBonus = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const deletedBonus = await Bonus.findOneAndDelete({ teacherId: id });
+    const deletedBonus = await Bonus.findOneAndDelete({ _id: id });
 
     if (!deletedBonus) {
       return res.status(404).send("Bonus not found");
     }
 
-    await Stimulation.findOneAndDelete(
-      { teacherId: deletedBonus.teacherId },
-      { $pull: { bonuses: deletedBonus._id } }
-    );
-    
+    await Salary.findByIdAndUpdate(deletedBonus.teacherId, {
+      $pull: { bonus: { _id: deletedBonus._id } },
+      $inc: { totalSalary: -deletedBonus.amount },
+    });
+
     res.status(200).json({ message: "Bonus deleted" });
   } catch (err) {
     console.error("Error deleting bonus:", err);
@@ -72,17 +90,41 @@ const deleteBonus = async (req, res) => {
 
 const editBonus = async (req, res) => {
   const { id } = req.params;
+  const updates = req.body;
 
   try {
-    const updatedBonus = await Bonus.findOneAndUpdate(
-      { teacherId: id },
-      req.body,
-      { new: true }
-    );
-
-    if (!updatedBonus) {
+    const currentBonus = await Bonus.findById(id);
+    if (!currentBonus) {
       return res.status(404).send("Bonus not found");
     }
+
+    const updatedBonus = await Bonus.findByIdAndUpdate(id, updates, {
+      new: true,
+    });
+
+    const salary = await Salary.findById(currentBonus.teacherId);
+    if (!salary) {
+      return res.status(404).send("Salary record not found");
+    }
+
+    const bonusIndex = salary.bonus.findIndex((b) => b._id.toString() === id);
+
+    if (bonusIndex === -1) {
+      return res.status(404).send("Bonus not found in salary record");
+    }
+
+    const amountDiff = updatedBonus.amount - currentBonus.amount;
+
+    salary.bonus[bonusIndex] = {
+      _id: updatedBonus._id,
+      amount: updatedBonus.amount,
+      comment: updatedBonus.comment,
+      date: updatedBonus.date,
+    };
+
+    salary.totalSalary = (salary.totalSalary || 0) + amountDiff;
+
+    await salary.save();
 
     res.status(200).json({ message: "Bonus updated", updatedBonus });
   } catch (err) {

@@ -91,24 +91,6 @@ const teacherSchema = mongoose.Schema(
       ],
       default: [],
     },
-    bonus: {
-      type: [
-        {
-          amount: {
-            type: Number,
-            required: true,
-          },
-          date: {
-            type: Date,
-            default: Date.now,
-          },
-          comment: {
-            type: String,
-          },
-        },
-      ],
-      default: [],
-    },
   },
   {
     collection: "Teachers",

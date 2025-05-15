@@ -36,14 +36,14 @@ router.put("/classes/update/:id", classesController.updateClass);
 router.delete("/classes/delete/:id", classesController.deleteClass);
 
 router.get("/bonus", bonusController.getBonuses);
-router.post("/bonus", bonusController.addBonus);
+router.post("/bonus/:id", bonusController.addBonus);
 router.delete("/bonus/:id", bonusController.deleteBonus);
 router.put("/bonus/:id", bonusController.editBonus);
 
-router.get("/fine/search", fineController.getAllFines);
-router.post("/fine/add", fineController.addFine);
-router.put("/fine/update/:id", fineController.updateFine);
-router.delete("/fine/delete/:id", fineController.deleteFine);
+router.get("/fine", fineController.getAllFines);
+router.post("/fine/:id", fineController.addFine);
+router.put("/fine/:id", fineController.updateFine);
+router.delete("/fine/:id", fineController.deleteFine);
 
 router.get("/lesson", lessonController.getAllLessons);
 router.post("/lesson", lessonController.addLesson);

@@ -1,40 +1,40 @@
 const Fine = require("../models/fineModel");
 const Teacher = require("../models/teacherModel");
+const Salary = require("../models/salaryModel");
 
 const addFine = async (req, res) => {
-  const { teacherId, type, amount, comment } = req.body;
-
-  if (!teacherId) {
-    return res.status(400).json({ message: "Teacher ID is required" });
-  }
-
-  if (!type || type.trim() === "") {
-    return res.status(400).json({ message: "Fine type is required" });
-  }
-
-  if (!amount) {
-    return res.status(400).json({ message: "Fine amount is required" });
-  }
+  const { id } = req.params;
+  const { type, amount, comment, fullname } = req.body;
 
   try {
-    const teacher = await Teacher.findById(teacherId);
+    const salary = await Salary.findById(id);
 
-    if (!teacher) {
-      return res.status(404).json({ message: "Teacher not found" });
+    if (!salary) {
+      return res.status(404).json({ message: "Salary not found" });
     }
 
-    const newFine = new Fine({
-      teacherId,
-      fullname: teacher.fullname,
+    const fine = new Fine({
+      teacherId: id,
+      fullname,
       type: type.trim(),
       amount,
-      comment: comment ? comment.trim() : undefined,
+      comment,
     });
 
-    await newFine.save();
-    return res
-      .status(201)
-      .json({ message: "Fine created successfully", newFine });
+    await fine.save();
+
+    salary.fine.push({
+      _id: fine._id,
+      amount: fine.amount,
+      comment: fine.comment,
+      date: fine.date,
+    });
+
+    salary.totalSalary = (salary.totalSalary || 0) - amount;
+
+    await salary.save();
+
+    return res.status(201).json({ message: "Fine created successfully", fine });
   } catch (err) {
     console.error("Error creating fine:", err);
     return res.status(500).send("Server error");

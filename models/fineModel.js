@@ -7,17 +7,11 @@ const fineSchema = new mongoose.Schema(
       ref: "Teacher",
       required: true,
     },
-    
-    fineId:{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Fine",
-      required: true,
-    },
 
     fullname: {
       type: String,
       ref: "Teacher",
-      required: true, 
+      required: true,
     },
 
     type: {
