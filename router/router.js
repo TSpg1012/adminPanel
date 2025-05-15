@@ -9,6 +9,7 @@ const bonusController = require("../controller/bonusController");
 const fineController = require("../controller/fineController");
 const lessonController = require("../controller/lessonController");
 const notificationController = require("../controller/notificationController");
+const salaryController = require("../controller/salaryController");
 
 router.get("/students", studentController.getAllStudents);
 router.post("/students/add", studentController.addStudent);
@@ -59,5 +60,7 @@ router.put(
   "/notifications/update/:id",
   notificationController.updateNotification
 );
+
+router.get("/salary", salaryController.getSalaries);
 
 module.exports = router;

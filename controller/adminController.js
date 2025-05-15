@@ -3,8 +3,15 @@ const User = require("../models/userModel");
 const Student = require("../models/studentModel");
 const Teacher = require("../models/teacherModel");
 const Salary = require("../models/salaryModel");
-const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
+
+// (async () => {
+//   const mongoose = require("mongoose");
+//   const Teacher = require("../models/teacherModel");
+
+//   await Teacher.collection.dropIndex("id_1");
+//   console.log("Index dropped!");
+// })();
 
 const addUser = async (req, res) => {
   const { gmail, password, role, fullname, ...rest } = req.body;
@@ -18,12 +25,15 @@ const addUser = async (req, res) => {
     if (existingUser) {
       return res.status(400).send("User with this Gmail already exists");
     }
-
     const newUser = new User({
       gmail,
       password: hashedPassword,
       role,
     });
+
+    await newUser.save();
+
+    console.log(newUser);
 
     if (role === "admin") {
       if (!fullname) {
@@ -58,7 +68,7 @@ const addUser = async (req, res) => {
         gmail,
         password: hashedPassword,
         ...rest,
-        userId: newUser._id,
+        _id: newUser._id,
       });
       await newTeacher.save();
 
@@ -77,7 +87,7 @@ const addUser = async (req, res) => {
       }
 
       const salaryDoc = new Salary({
-        teacherId: newTeacher._id,
+        _id: newTeacher._id,
         teacherName: fullname,
         salary: rest.salary.amount,
         salaryType: rest.salary.salaryType,
@@ -87,8 +97,6 @@ const addUser = async (req, res) => {
 
       salaryDoc.save();
     }
-
-    await newUser.save();
 
     return res
       .status(201)
@@ -100,7 +108,7 @@ const addUser = async (req, res) => {
 };
 
 const editUser = async (req, res) => {
-  const id = req.params;
+  const id = req.params.id;
   const { role, ...updates } = req.body;
 
   try {
@@ -159,12 +167,16 @@ const editUser = async (req, res) => {
 };
 
 const deleteUser = async (req, res) => {
-  const id = req.params;
+  const id = req.params.id;
   const { role } = req.body;
+  const { ObjectId } = require("mongoose").Types;
+
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).json({ error: "Invalid user ID" });
+  }
 
   try {
     let deleted;
-    const { ObjectId } = require("mongoose").Types;
     const filter = { _id: new ObjectId(id) };
 
     if (role === "admin") {
@@ -175,11 +187,13 @@ const deleteUser = async (req, res) => {
       deleted = await Teacher.findOneAndDelete(filter);
 
       if (deleted) {
-        await Salary.findOneAndDelete({ teacherId: deleted._id });
+        await Salary.findOneAndDelete({ _id: deleted._id });
       }
     } else {
       return res.status(400).send("Invalid role");
     }
+
+    await User.findOneAndDelete(filter);
 
     if (!deleted) return res.status(404).send("User not found");
 

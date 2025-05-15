@@ -2,10 +2,9 @@ const mongoose = require("mongoose");
 
 const salarySchema = new mongoose.Schema(
   {
-    teacherId: {
+    _id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Teacher",
-      required: true,
     },
     teacherName: {
       type: String,
@@ -55,6 +54,7 @@ const salarySchema = new mongoose.Schema(
   },
   {
     collection: "Salary",
+    timestamps: true,
   }
 );
 

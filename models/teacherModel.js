@@ -2,10 +2,9 @@ const mongoose = require("mongoose");
 
 const teacherSchema = mongoose.Schema(
   {
-    userId: {
+    _id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
     },
     role: {
       type: String,
@@ -23,10 +22,6 @@ const teacherSchema = mongoose.Schema(
     password: {
       type: String,
       required: true,
-      unique: true,
-    },
-    id: {
-      type: Number,
       unique: true,
     },
     birthday: {
@@ -69,7 +64,7 @@ const teacherSchema = mongoose.Schema(
       },
       salaryType: {
         type: String,
-        enum: ["Monthly", "Hourly", "Weakly", "Yearly"],
+        enum: ["Monthly", "Hourly", "Weekly", "Yearly"],
         required: true,
       },
     },
@@ -117,6 +112,7 @@ const teacherSchema = mongoose.Schema(
   },
   {
     collection: "Teachers",
+    timestamps: true,
   }
 );
 
