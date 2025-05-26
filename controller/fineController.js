@@ -42,17 +42,44 @@ const addFine = async (req, res) => {
 };
 
 const updateFine = async (req, res) => {
-  try {
-    const fineId = req.params.id;
-    const fine = await Fine.findById(fineId);
+  const id = req.params.id;
+  const updates = req.body;
 
-    if (!fine) {
+  try {
+    const currentFine = await Fine.findById(id);
+
+    if (!currentFine) {
       return res.status(404).json({ message: "Fine not found" });
     }
 
-    const updatedFine = await Fine.findByIdAndUpdate(fineId, req.body, {
+    const updatedFine = await Fine.findByIdAndUpdate(id, updates, {
       new: true,
     });
+
+    const salary = await Salary.findById(currentFine.teacherId);
+
+    if (!salary) {
+      return res.status(404).send("Salary record not found");
+    }
+
+    const fineIndex = salary.fine.findIndex((b) => b._id.toString() === id);
+
+    if (fineIndex === -1) {
+      return res.status(404).send("Fine not found in salary record");
+    }
+
+    const amountDiff = currentFine.amount - updatedFine.amount;
+
+    salary.fine[fineIndex] = {
+      _id: updatedFine._id,
+      amount: updatedFine.amount,
+      comment: updatedFine.comment,
+      date: updatedFine.date,
+    };
+
+    salary.totalSalary = (salary.totalSalary || 0) + amountDiff;
+
+    await salary.save();
 
     return res
       .status(200)
@@ -65,30 +92,26 @@ const updateFine = async (req, res) => {
 
 const getAllFines = async (req, res) => {
   try {
-    const { name, startDate, endDate } = req.query;
+    const { fullname, startDate, endDate, fineType } = req.query;
 
     let searchCriteria = {};
 
-    if (name) {
-      searchCriteria.fullname = {
-        $regex: name,
-        $options: "i",
+    if (fullname) {
+      filter.fullname = { $regex: fullname, $options: "i" };
+    }
+
+    if (startDate && endDate) {
+      filter.date = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
       };
     }
 
-    if (startDate || endDate) {
-      searchCriteria.date = {};
-
-      if (startDate) {
-        searchCriteria.date.$gte = new Date(startDate);
-      }
-
-      if (endDate) {
-        searchCriteria.date.$lte = new Date(endDate);
-      }
+    if (fineType) {
+      searchCriteria.type = fineType;
     }
 
-    const fines = await Fine.find(searchCriteria);
+    const fines = await Fine.find(searchCriteria).sort({ date: 1 });
 
     return res.status(200).json(fines);
   } catch (err) {
@@ -98,15 +121,18 @@ const getAllFines = async (req, res) => {
 };
 
 const deleteFine = async (req, res) => {
+  const id = req.params.id;
   try {
-    const fineId = req.params.id;
-    const fine = await Fine.findById(fineId);
+    const fine = await Fine.findOneAndDelete({ _id: id });
 
     if (!fine) {
       return res.status(404).json({ message: "Fine not found" });
     }
 
-    await Fine.findByIdAndDelete(fineId);
+    await Salary.findByIdAndUpdate(fine.teacherId, {
+      $pull: { fine: { _id: fine._id } },
+      $inc: { totalSalary: +fine.amount },
+    });
 
     return res.status(200).json({ message: "Fine deleted successfully" });
   } catch (err) {

@@ -46,9 +46,10 @@ router.put("/fine/:id", fineController.updateFine);
 router.delete("/fine/:id", fineController.deleteFine);
 
 router.get("/lesson", lessonController.getAllLessons);
-router.post("/lesson", lessonController.addLesson);
+router.post("/lesson/:id", lessonController.addLesson);
 router.put("/lesson/:id", lessonController.editLesson);
 router.delete("/lesson/:id", lessonController.deleteLesson);
+router.get("/available-students", lessonController.getAvailableStudents);
 
 router.post("/notifications/add", notificationController.createNotification);
 router.get("/notifications", notificationController.getNotifications);

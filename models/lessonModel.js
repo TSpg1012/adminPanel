@@ -14,7 +14,6 @@ const lessonSchema = new mongoose.Schema(
     classId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Class",
-      required: true,
     },
     className: {
       type: String,
@@ -47,7 +46,6 @@ const lessonSchema = new mongoose.Schema(
     tableType: {
       type: String,
       enum: ["main", "current"],
-      required: true,
     },
     students: [
       {

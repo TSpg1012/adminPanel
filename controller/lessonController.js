@@ -1,6 +1,8 @@
 const Lesson = require("../models/lessonModel");
 const Teacher = require("../models/teacherModel");
 const Classes = require("../models/classesModel");
+const Salary = require("../models/salaryModel");
+const Student = require("../models/studentModel");
 
 function getTableId(weekday, timeSlot) {
   const weekdayMap = {
@@ -29,7 +31,8 @@ function getTableId(weekday, timeSlot) {
 }
 
 const addLesson = async (req, res) => {
-  const { fullname, className, date, time, students, role, tableType } =
+  const { id } = req.params;
+  const { teacherName, className, date, time, students, role, tableType } =
     req.body;
 
   try {
@@ -39,14 +42,9 @@ const addLesson = async (req, res) => {
         .json({ message: "You are not authorized to add lessons" });
     }
 
-    const teacher = await Teacher.findOne({ fullname: fullname });
+    const teacher = await Teacher.findOne({ _id: id });
     if (!teacher) {
       return res.status(404).json({ message: "Teacher not found" });
-    }
-
-    const classDoc = await Classes.findOne({ className: className });
-    if (!classDoc) {
-      return res.status(404).json({ message: "Class not found" });
     }
 
     const weekday = new Date(date).toLocaleDateString("en-US", {
@@ -55,23 +53,12 @@ const addLesson = async (req, res) => {
 
     const tableId = getTableId(weekday, time);
 
-    const formattedStudents = students.map((s) => ({
-      studentId: s.studentId,
-      fullname: s.fullname,
-    }));
-
-    const existingLesson = await Lesson.findOne({ tableId, tableType });
-    if (existingLesson) {
-      return res
-        .status(409)
-        .json({ message: "This timeslot is already occupied." });
-    }
+    const studentIds = students.map((s) => s.studentId);
 
     const lesson = new Lesson({
       teacherId: teacher._id,
       teacherName: teacher.fullname,
-      classId: classDoc._id,
-      className,
+      className: className,
       date,
       time,
       students,
@@ -83,7 +70,10 @@ const addLesson = async (req, res) => {
 
     await lesson.save();
 
-    res.status(201).json({ message: "Lesson added", lesson });
+    res.status(201).json({
+      message: "Lesson added",
+      lesson,
+    });
   } catch (err) {
     console.error("Error adding lesson:", err);
     res.status(500).send("Server error");
@@ -101,6 +91,8 @@ const editLesson = async (req, res) => {
       return res.status(400).send("Lesson not found");
     }
 
+    let updatedLesson;
+
     if (role === "admin") {
       let newTableId = lesson.tableId;
 
@@ -111,42 +103,76 @@ const editLesson = async (req, res) => {
         newTableId = getTableId(weekday, req.body.time);
       }
 
-      const updatedLesson = await Lesson.findOneAndUpdate(
+      const updatedFields = {
+        teacherName: req.body.teacherName || lesson.teacherName,
+        className: req.body.className || lesson.className,
+        students: req.body.students || lesson.students,
+        date: req.body.date || lesson.date,
+        time: req.body.time || lesson.time,
+        tableId: newTableId,
+      };
+
+      if (["confirmed", "canceled", "unviewed"].includes(req.body.status)) {
+        updatedFields.status = req.body.status;
+      }
+
+      updatedLesson = await Lesson.findOneAndUpdate(
         { tableId: id },
-        {
-          teacherName: req.body.teacherName || lesson.teacherName,
-          className: req.body.className || lesson.className,
-          students: req.body.students || lesson.students,
-          date: req.body.date || lesson.date,
-          time: req.body.time || lesson.time,
-          tableId: newTableId,
-        },
+        updatedFields,
         { new: true }
       );
+    } else if (role === "teacher") {
+      const updatedFields = {
+        teacherNote: req.body.teacherNote || lesson.teacherNote,
+        tasks: req.body.tasks || lesson.tasks,
+      };
 
-      return res
-        .status(200)
-        .json({ message: "Lesson updated by admin", lesson: updatedLesson });
-    }
+      if (["confirmed", "canceled"].includes(req.body.status)) {
+        updatedFields.status = req.body.status;
+      }
 
-    if (role === "teacher") {
-      const updatedLesson = await Lesson.findOneAndUpdate(
+      updatedLesson = await Lesson.findOneAndUpdate(
         { tableId: id },
-        {
-          teacherNote: req.body.teacherNote || lesson.teacherNote,
-          tasks: req.body.tasks || lesson.tasks,
-        },
+        updatedFields,
         { new: true }
       );
-
+    } else {
       return res
-        .status(200)
-        .json({ message: "Lesson updated by teacher", lesson: updatedLesson });
+        .status(403)
+        .json({ message: "You are not authorized to edit this lesson" });
     }
 
-    return res
-      .status(403)
-      .json({ message: "You are not authorized to edit this lesson" });
+    const oldStatus = lesson.status;
+    const newStatus = req.body.status;
+
+    if (newStatus && newStatus !== oldStatus) {
+      const studentCount = updatedLesson.students?.length || 0;
+      const updates = { $inc: {} };
+
+      if (oldStatus === "confirmed") {
+        updates.$inc.confirmed = -1;
+        updates.$inc.participantCount = -studentCount;
+      } else if (oldStatus === "canceled") {
+        updates.$inc.canceled = -1;
+      }
+
+      if (newStatus === "confirmed") {
+        updates.$inc.confirmed = (updates.$inc.confirmed || 0) + 1;
+        updates.$inc.participantCount =
+          (updates.$inc.participantCount || 0) + studentCount;
+      } else if (newStatus === "canceled") {
+        updates.$inc.canceled = (updates.$inc.canceled || 0) + 1;
+      }
+
+      await Salary.findByIdAndUpdate(updatedLesson.teacherId, updates, {
+        new: true,
+      });
+    }
+
+    return res.status(200).json({
+      message: `Lesson updated by ${role}`,
+      lesson: updatedLesson,
+    });
   } catch (err) {
     console.error("Error editing lesson:", err);
     res.status(500).send("Server error");
@@ -155,6 +181,7 @@ const editLesson = async (req, res) => {
 
 const deleteLesson = async (req, res) => {
   const { id } = req.params;
+  const { role } = req.body;
 
   try {
     const lesson = await Lesson.findOne({ tableId: id });
@@ -167,6 +194,24 @@ const deleteLesson = async (req, res) => {
       return res
         .status(403)
         .json({ message: "You are not authorized to delete lessons" });
+    }
+
+    const updates = {};
+
+    if (lesson.status === "confirmed") {
+      const studentCount = lesson.students?.length || 0;
+      updates.confirmed = -1;
+      updates.participantCount = -studentCount;
+    } else if (lesson.status === "canceled") {
+      updates.canceled = -1;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await Salary.findByIdAndUpdate(
+        lesson.teacherId,
+        { $inc: updates },
+        { new: true }
+      );
     }
 
     await Lesson.deleteOne({ tableId: id });
@@ -219,9 +264,44 @@ const getAllLessons = async (req, res) => {
   }
 };
 
+const getAvailableStudents = async (req, res) => {
+  const { tableId, yearMonth } = req.query;
+
+  try {
+    const lessons = await Lesson.find({ tableId });
+    const busyStudentIds = new Set();
+
+    lessons.forEach((lesson) => {
+      lesson.students.forEach((s) => {
+        busyStudentIds.add(s.studentId.toString());
+        // console.log(s.studentId.toString());
+      });
+    });
+
+    const allStudents = await Student.find();
+
+    // const availableStudents = await Student.find({
+    //   _id: { $nin: Array.from(busyStudentIds) },
+    // });
+
+    const availableStudents = allStudents.map((student) => {
+      return {
+        ...student.toObject(),
+        isBusy: busyStudentIds.has(student._id.toString()),
+      };
+    });
+
+    res.status(200).json(availableStudents);
+  } catch (err) {
+    console.error("Error getting available students:", err);
+    res.status(500).send("Server error");
+  }
+};
+
 module.exports = {
   addLesson,
   editLesson,
   deleteLesson,
   getAllLessons,
+  getAvailableStudents,
 };

@@ -87,6 +87,10 @@ const teacherSchema = mongoose.Schema(
             type: Number,
             default: 0,
           },
+          lessonCount: {
+            type: Number,
+            required: true,
+          },
         },
       ],
       default: [],
