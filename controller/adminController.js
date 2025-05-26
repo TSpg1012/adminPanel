@@ -3,6 +3,8 @@ const User = require("../models/userModel");
 const Student = require("../models/studentModel");
 const Teacher = require("../models/teacherModel");
 const Salary = require("../models/salaryModel");
+const Notification = require("../models/notificationModel");
+const sendRoleNotification = require("../utills/sendRoleNotification");
 const bcrypt = require("bcrypt");
 
 // (async () => {
@@ -32,15 +34,16 @@ const addUser = async (req, res) => {
     });
 
     await newUser.save();
+    const io = req.app.get("io");
 
-    console.log(newUser);
+    let createdUser;
 
     if (role === "admin") {
       if (!fullname) {
         return res.status(400).send("Fullname is required for admin");
       }
 
-      const newAdmin = new Admin({
+      createdUser = new Admin({
         fullname,
         gmail,
         password: hashedPassword,
@@ -48,29 +51,30 @@ const addUser = async (req, res) => {
         userId: newUser._id,
       });
 
-      await newAdmin.save();
+      await createdUser.save();
     }
 
     if (role === "student") {
-      const newStudent = new Student({
+      createdUser = new Student({
         fullname,
         gmail,
         password: hashedPassword,
         ...rest,
         userId: newUser._id,
       });
-      await newStudent.save();
+      await createdUser.save();
     }
 
     if (role === "teacher") {
-      const newTeacher = new Teacher({
+      createdUser = new Teacher({
         fullname,
         gmail,
         password: hashedPassword,
         ...rest,
         _id: newUser._id,
       });
-      await newTeacher.save();
+
+      await createdUser.save();
 
       let totalSalary = 0;
       if (rest.salary.salaryType === "Monthly") {
@@ -87,7 +91,7 @@ const addUser = async (req, res) => {
       }
 
       const salaryDoc = new Salary({
-        _id: newTeacher._id,
+        _id: createdUser._id,
         teacherName: fullname,
         salary: rest.salary.amount,
         salaryType: rest.salary.salaryType,
@@ -96,8 +100,10 @@ const addUser = async (req, res) => {
         fine: [],
       });
 
-      salaryDoc.save();
+      await salaryDoc.save();
     }
+
+    await sendRoleNotification(io, role, createdUser._id, fullname);
 
     return res
       .status(201)
