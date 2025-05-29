@@ -10,7 +10,6 @@ const bcrypt = require("bcrypt");
 // (async () => {
 //   const mongoose = require("mongoose");
 //   const Teacher = require("../models/teacherModel");
-
 //   await Teacher.collection.dropIndex("id_1");
 //   console.log("Index dropped!");
 // })();

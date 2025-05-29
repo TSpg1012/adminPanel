@@ -122,6 +122,7 @@ cron.schedule("* * * * *", async () => {
           date: thisWeekDate,
           className: lesson.className,
           time: lesson.time,
+          tableType: lesson.tableType,
           teacherNote: "",
           tasks: "",
           status: "confirmed",
