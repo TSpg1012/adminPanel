@@ -18,12 +18,19 @@ const notificationSchema = new mongoose.Schema(
         "absenceAlert",
         "newAssignment",
         "resultPosted",
+        "teacher_added",  
+        "student_added",
+        "admin_added"
       ],
       required: true,
     },
     target: {
       type: String,
       enum: ["student", "teacher", "all"],
+      required: true,
+    },
+    message: {             
+      type: String,
       required: true,
     },
     isRead: {

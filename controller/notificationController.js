@@ -43,8 +43,8 @@ const getNotifications = async (req, res) => {
     }).sort({ createdAt: -1 });
 
     const formattedNotifications = [{
-      current: unreadNotifications,
-      previous: readNotifications,
+      unread: unreadNotifications,
+      read: readNotifications,
     }];
 
     res.status(200).json(formattedNotifications);

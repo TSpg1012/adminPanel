@@ -1,4 +1,3 @@
-const moongose = require("mongoose");
 const Teacher = require("../models/teacherModel");
 
 const getAllTeachers = async (req, res) => {
@@ -16,7 +15,7 @@ const addTeacher = async (req, res) => {
   try {
     const newTeacher = new Teacher({
       id: req.body.id,
-      name: req.body.name,
+      fullname: req.body.fullname,
       age: req.body.age,
       fincode: req.body.fincode,
       mobile_number: req.body.mobile_number,
