@@ -3,6 +3,9 @@ const Teacher = require("../models/teacherModel");
 const Classes = require("../models/classesModel");
 const Salary = require("../models/salaryModel");
 const Student = require("../models/studentModel");
+const cron = require("node-cron");
+// const moment = require("moment");
+const moment = require("moment-timezone");
 
 function getTableId(weekday, timeSlot) {
   const weekdayMap = {
@@ -30,10 +33,134 @@ function getTableId(weekday, timeSlot) {
   return row + col;
 }
 
+const date = new Date();
+date.setFullYear(2025);
+date.setMonth(4);
+date.setDate(26);
+date.setHours(5, 0, 0, 0);
+
+// console.log(date.toString());
+
+//0 0 * * 1
+//* * * * *
+cron.schedule("0 0 * * 1", async () => {
+  console.log("salam");
+
+  // const now = moment().tz("Asia/Baku");
+  // console.log(now);
+
+  try {
+    //custom
+    const lastWeekStart = moment(date)
+      .subtract(1, "week")
+      .startOf("isoWeek")
+      .toDate();
+
+    const lastWeekEnd = moment(date)
+      .subtract(1, "week")
+      .endOf("isoWeek")
+      .toDate();
+
+    //dynamic
+    // const lastWeekStart = now
+    //   .clone()
+    //   .subtract(1, "week")
+    //   .startOf("isoWeek")
+    //   .toDate();
+    // const lastWeekEnd = now
+    //   .clone()
+    //   .subtract(1, "week")
+    //   .endOf("isoWeek")
+    //   .toDate();
+
+    const salaries = await Salary.find({ lessonCount: { $gt: 0 } });
+
+    for (const sal of salaries) {
+      const teacherId = sal._id;
+      let remainingLessons = sal.lessonCount;
+
+      if (!teacherId || remainingLessons <= 0) continue;
+
+      const lastWeekLessons = await Lesson.find({
+        teacherId: teacherId,
+        date: { $gte: lastWeekStart, $lte: lastWeekEnd },
+        tableType: "main",
+      }).sort({ date: 1 });
+
+      for (const lesson of lastWeekLessons) {
+        if (remainingLessons <= 0) break;
+
+        const lessonDay = moment(lesson.date).isoWeekday();
+
+        //custom
+        const thisWeekDate = moment
+          .tz(date, "Asia/Baku")
+          .startOf("isoWeek")
+          .add(lessonDay - 1, "days")
+          .hour(4)
+          .minute(0)
+          .second(0)
+          .millisecond(0)
+          .toDate();
+
+        //dynamic
+        // const thisWeekDate = now
+        //   .clone()
+        //   .startOf("isoWeek")
+        //   .add(lessonDay - 1, "days")
+        //   .hour(4)
+        //   .minute(0)
+        //   .second(0)
+        //   .millisecond(0)
+        //   .toDate();
+
+        const newLesson = new Lesson({
+          classId: lesson.classId,
+          teacherId: lesson.teacherId,
+          teacherName: lesson.teacherName,
+          date: thisWeekDate,
+          className: lesson.className,
+          time: lesson.time,
+          teacherNote: "",
+          tasks: "",
+          status: "confirmed",
+          tableId: lesson.tableId,
+          students: lesson.students,
+        });
+
+        await newLesson.save();
+
+        remainingLessons -= 1;
+        const studentCount = lesson.students?.length || 0;
+
+        await Salary.findByIdAndUpdate(lesson.teacherId, {
+          $inc: {
+            confirmed: 1,
+            participantCount: studentCount,
+            lessonCount: -1,
+          },
+        });
+      }
+    }
+
+    console.log("Keçmiş həftənin dərsləri növbəti həftəyə kopyalandı.");
+  } catch (error) {
+    console.error("Cron xətası:", error);
+  }
+});
+
 const addLesson = async (req, res) => {
   const { id } = req.params;
-  const { teacherName, className, date, time, students, role, tableType } =
-    req.body;
+  const {
+    teacherName,
+    className,
+    date,
+    time,
+    students,
+    role,
+    tableType,
+    lessonCount,
+  } = req.body;
 
   try {
     if (role !== "admin") {
@@ -64,6 +191,7 @@ const addLesson = async (req, res) => {
       students,
       tableType,
       tableId,
+      lessonCount,
       teacherNote: "",
       tasks: "",
     });
@@ -81,11 +209,11 @@ const addLesson = async (req, res) => {
 };
 
 const editLesson = async (req, res) => {
-  const { id } = req.params;
+  const { tableId, id } = req.params;
   const { role } = req.body;
 
   try {
-    const lesson = await Lesson.findOne({ tableId: id });
+    const lesson = await Lesson.findOne({ tableId: tableId, _id: id });
 
     if (!lesson) {
       return res.status(400).send("Lesson not found");
@@ -109,6 +237,7 @@ const editLesson = async (req, res) => {
         students: req.body.students || lesson.students,
         date: req.body.date || lesson.date,
         time: req.body.time || lesson.time,
+        lessonCount: req.body.lessonCount ?? lesson.lessonCount,
         tableId: newTableId,
       };
 
@@ -117,7 +246,7 @@ const editLesson = async (req, res) => {
       }
 
       updatedLesson = await Lesson.findOneAndUpdate(
-        { tableId: id },
+        { tableId: tableId, _id: id },
         updatedFields,
         { new: true }
       );
@@ -132,7 +261,7 @@ const editLesson = async (req, res) => {
       }
 
       updatedLesson = await Lesson.findOneAndUpdate(
-        { tableId: id },
+        { tableId: tableId, _id: id },
         updatedFields,
         { new: true }
       );
@@ -143,7 +272,7 @@ const editLesson = async (req, res) => {
     }
 
     const oldStatus = lesson.status;
-    const newStatus = req.body.status;
+    const newStatus = updatedLesson.status;
 
     if (newStatus && newStatus !== oldStatus) {
       const studentCount = updatedLesson.students?.length || 0;
@@ -152,11 +281,15 @@ const editLesson = async (req, res) => {
       if (oldStatus === "confirmed") {
         updates.$inc.confirmed = -1;
         updates.$inc.participantCount = -studentCount;
+        updates.$inc.lessonCount = 1;
       } else if (oldStatus === "canceled") {
         updates.$inc.canceled = -1;
       }
 
       if (newStatus === "confirmed") {
+        if (oldStatus === "unviewed" || oldStatus === "canceled") {
+          updates.$inc.lessonCount = -1;
+        }
         updates.$inc.confirmed = (updates.$inc.confirmed || 0) + 1;
         updates.$inc.participantCount =
           (updates.$inc.participantCount || 0) + studentCount;
@@ -180,11 +313,11 @@ const editLesson = async (req, res) => {
 };
 
 const deleteLesson = async (req, res) => {
-  const { id } = req.params;
+  const { tableId, id } = req.params;
   const { role } = req.body;
 
   try {
-    const lesson = await Lesson.findOne({ tableId: id });
+    const lesson = await Lesson.findOne({ tableId: tableId, _id: id });
 
     if (!lesson) {
       return res.status(400).send("Lesson not found");
@@ -202,6 +335,7 @@ const deleteLesson = async (req, res) => {
       const studentCount = lesson.students?.length || 0;
       updates.confirmed = -1;
       updates.participantCount = -studentCount;
+      updates.lessonCount = 1;
     } else if (lesson.status === "canceled") {
       updates.canceled = -1;
     }
@@ -214,7 +348,7 @@ const deleteLesson = async (req, res) => {
       );
     }
 
-    await Lesson.deleteOne({ tableId: id });
+    await Lesson.deleteOne({ tableId: tableId, _id: id });
 
     res.status(200).json({ message: "Lesson deleted successfully" });
   } catch (err) {

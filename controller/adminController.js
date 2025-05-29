@@ -92,6 +92,7 @@ const addUser = async (req, res) => {
         salary: rest.salary.amount,
         salaryType: rest.salary.salaryType,
         totalSalary: totalSalary,
+        lessonCount: rest.lessonCount,
         bonus: [],
         fine: [],
       });
@@ -118,11 +119,25 @@ const editUser = async (req, res) => {
     const filter = { _id: new ObjectId(id) };
 
     if (role === "admin") {
-      updated = await Admin.findOneAndUpdate(filter, updates, { new: true });
+      updated = await Admin.findOneAndUpdate(filter, updates, {
+        new: true,
+        runValidators: true,
+      });
     } else if (role === "student") {
-      updated = await Student.findOneAndUpdate(filter, updates, { new: true });
+      updated = await Student.findOneAndUpdate(filter, updates, {
+        new: true,
+        runValidators: true,
+      });
     } else if (role === "teacher") {
-      updated = await Teacher.findOneAndUpdate(filter, updates, { new: true });
+      updated = await Teacher.findOneAndUpdate(filter, updates, {
+        new: true,
+        runValidators: true,
+      });
+
+      await Salary.findByIdAndUpdate(filter, updates, {
+        new: true,
+        runValidators: true,
+      });
 
       if (updates.salary && updated) {
         const confirmed = updates.confirmed || 0;
@@ -143,15 +158,14 @@ const editUser = async (req, res) => {
           const months = Math.ceil(confirmed / 20);
           totalSalary = (salaryAmount / 12) * months + bonus;
         }
-
         await Salary.findOneAndUpdate(
-          { teacherId: updated._id },
+          { _id: updated._id },
           {
             salary: salaryAmount,
             salaryType: salaryType,
             totalSalary: totalSalary,
           },
-          { new: true }
+          { new: true, runValidators: true }
         );
       }
     } else {

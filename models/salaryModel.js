@@ -22,12 +22,16 @@ const salarySchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    lessonCount: {
+      type: Number,
+    },
     salary: {
       type: Number,
       required: true,
     },
     salaryType: {
       type: String,
+      enum: ["Monthly", "Hourly", "Weekly", "Yearly"],
       required: true,
     },
     totalSalary: {

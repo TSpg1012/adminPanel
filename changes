@@ -1,3 +1,6 @@
 table id :
 main table lessons goes till teacher lesson limit , 
 weekly teacher total
+user edit fucked up 
+when lesson is unviewed , lesson count will not be decrease 
+when lesson is confirmed , lesson count will be decrease 
