@@ -3,7 +3,7 @@ const Teacher = require("../models/teacherModel");
 const Notification = require("../models/notificationModel");
 
 module.exports = (io) => {
-  cron.schedule("* * * * *", async () => {
+  cron.schedule("0 0 * * *", async () => {
     const today = new Date();
     const month = today.getMonth() + 1;
     const day = today.getDate();

@@ -3,6 +3,7 @@ const Teacher = require("../models/teacherModel");
 const Classes = require("../models/classesModel");
 const Salary = require("../models/salaryModel");
 const Student = require("../models/studentModel");
+const Notification = require("../models/notificationModel");
 const cron = require("node-cron");
 // const moment = require("moment");
 const moment = require("moment-timezone");
@@ -43,7 +44,7 @@ date.setHours(5, 0, 0, 0);
 
 //0 0 * * 1
 //* * * * *
-cron.schedule("0 0 * * 1", async () => {
+cron.schedule("* * * * *", async () => {
   console.log("salam");
 
   // const now = moment().tz("Asia/Baku");
@@ -145,7 +146,15 @@ cron.schedule("0 0 * * 1", async () => {
 
     console.log("Keçmiş həftənin dərsləri növbəti həftəyə kopyalandı.");
   } catch (error) {
-    console.error("Cron xətası:", error);
+    console.error("Cron Error:", error);
+  }finally {
+    const message = `New weeks' lesson added`;
+    
+        await Notification.create({
+         type: "adminMessage",
+         target: "all",
+         message,
+        });
   }
 });
 
@@ -197,6 +206,21 @@ const addLesson = async (req, res) => {
     });
 
     await lesson.save();
+
+    const message = `New lesson added: ${className}`;
+
+    const io = req.app.get("io");
+    io.emit("lesson:added", {
+      message,
+      target: "admin",
+      lesson: lesson,
+    });
+
+    await Notification.create({
+      type: "adminMessage",
+      target: "admin",
+      message,
+    });
 
     res.status(201).json({
       message: "Lesson added",
@@ -302,6 +326,18 @@ const editLesson = async (req, res) => {
       });
     }
 
+    io.emit("lesson:statusChanged", {
+      message: `The status of the lesson has changed to '${newStatus}'`,
+      lessonId: updatedLesson._id,
+      oldStatus,
+      newStatus,
+      teacherName: updatedLesson.teacherName,
+      className: updatedLesson.className,
+      date: updatedLesson.date,
+      time: updatedLesson.time,
+      target: "teacher",
+    });
+
     return res.status(200).json({
       message: `Lesson updated by ${role}`,
       lesson: updatedLesson,
@@ -387,7 +423,7 @@ const getAllLessons = async (req, res) => {
       );
     }
 
-    if (!lessons) {
+    if (!lessons.length === 0) {
       return res.status(404).json({ message: "No lessons found" });
     }
 

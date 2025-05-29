@@ -19,10 +19,13 @@ const loginUser = async (req, res) => {
 
     if (user.role === "admin") {
       return res.status(200).send("Admin login successful");
+
     } else if (user.role === "student") {
       return res.status(200).send("Student login successful");
+
     } else if (user.role === "teacher") {
       return res.status(200).send("Teacher login successful");
+      
     } else {
       return res.status(400).send("Invalid role");
     }

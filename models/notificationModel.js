@@ -26,7 +26,7 @@ const notificationSchema = new mongoose.Schema(
     },
     target: {
       type: String,
-      enum: ["student", "teacher", "all"],
+      enum: ["student", "teacher","admin", "all"],
       required: true,
     },
     message: {             

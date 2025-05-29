@@ -4,17 +4,17 @@ const sendRoleNotification = async (io, role, userId, fullname) => {
     const notificationMap = {
       teacher: {
         type: "teacher_added",
-        target: "all",
+        target: "admin",
         message: `New teacher added : ${fullname}`,
       },
       student: {
         type: "student_added",
-        target: "teacher",
+        target: "admin",
         message: `New student added: ${fullname}`,
       },
       admin: {
         type: "admin_added",
-        target: "all",
+        target: "admin",
         message: `New Admin added: ${fullname}`,
       },
     };
