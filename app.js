@@ -2,6 +2,8 @@ const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
 const router = require("./router/router");
+const swaggerUi = require("swagger-ui-express");
+const swaggerFile = require('./swagger-output.json');
 require("dotenv").config();
 require("./DB/db");
 
@@ -29,6 +31,7 @@ birthdayNotificationJob(io);
 
 app.set("io", io);
 
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
 app.use("/", router);
 
 const port = process.env.PORT || 3000;

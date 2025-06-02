@@ -44,7 +44,11 @@ date.setHours(5, 0, 0, 0);
 
 //0 0 * * 1
 //* * * * *
+<<<<<<< Updated upstream
 cron.schedule("0 0 * * 1", async () => {
+=======
+cron.schedule("0 0 * * *", async () => {
+>>>>>>> Stashed changes
   console.log("salam");
 
   // const now = moment().tz("Asia/Baku");
