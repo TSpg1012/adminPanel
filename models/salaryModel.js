@@ -27,12 +27,10 @@ const salarySchema = new mongoose.Schema(
     },
     salary: {
       type: Number,
-      required: true,
     },
     salaryType: {
       type: String,
-      enum: ["Monthly", "Hourly", "Weekly", "Yearly"],
-      required: true,
+      enum: ["Monthly", "Hourly"],
     },
     totalSalary: {
       type: Number,

@@ -6,6 +6,7 @@ const teacherSchema = mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+
     role: {
       type: String,
     },
@@ -22,7 +23,6 @@ const teacherSchema = mongoose.Schema(
     password: {
       type: String,
       required: true,
-      unique: true,
     },
     birthday: {
       type: Date,
@@ -60,12 +60,10 @@ const teacherSchema = mongoose.Schema(
     salary: {
       amount: {
         type: Number,
-        required: true,
       },
       salaryType: {
         type: String,
-        enum: ["Monthly", "Hourly", "Weekly", "Yearly"],
-        required: true,
+        enum: ["Monthly", "Hourly"],
       },
     },
     class: {
@@ -73,7 +71,6 @@ const teacherSchema = mongoose.Schema(
         {
           name: {
             type: String,
-            required: true,
           },
           confirmed: {
             type: Number,

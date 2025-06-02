@@ -3,16 +3,33 @@ const User = require("../models/userModel");
 const Student = require("../models/studentModel");
 const Teacher = require("../models/teacherModel");
 const Salary = require("../models/salaryModel");
+const Lesson = require("../models/lessonModel");
 const Notification = require("../models/notificationModel");
 const sendRoleNotification = require("../utills/sendRoleNotification");
 const bcrypt = require("bcrypt");
+const mongoose = require("mongoose");
 
 // (async () => {
-//   const mongoose = require("mongoose");
 //   const Teacher = require("../models/teacherModel");
 //   await Teacher.collection.dropIndex("id_1");
 //   console.log("Index dropped!");
 // })();
+
+(async () => {
+  try {
+    await mongoose.connect(
+      "mongodb+srv://Seid:seid2004@cluster0.smx8fnk.mongodb.net/Etinify?retryWrites=true&w=majority&appName=Cluster0"
+    );
+    const collection = mongoose.connection.collection("Students");
+    await collection.dropIndex("id_1");
+    console.log("✅ Index 'id_1' dropped");
+    await mongoose.disconnect();
+  } catch (err) {
+    console.error("❌", err.message);
+  }
+})();
+
+// 
 
 const addUser = async (req, res) => {
   const { gmail, password, role, fullname, ...rest } = req.body;
@@ -33,6 +50,7 @@ const addUser = async (req, res) => {
     });
 
     await newUser.save();
+    console.log(newUser._id);
     const io = req.app.get("io");
 
     let createdUser;
@@ -59,7 +77,7 @@ const addUser = async (req, res) => {
         gmail,
         password: hashedPassword,
         ...rest,
-        userId: newUser._id,
+        // userId: newUser._id,
       });
       await createdUser.save();
     }
@@ -124,53 +142,54 @@ const editUser = async (req, res) => {
     const filter = { _id: new ObjectId(id) };
 
     if (role === "admin") {
-      updated = await Admin.findOneAndUpdate(filter, updates, {
-        new: true,
-        runValidators: true,
-      });
+      updated = await Admin.findOneAndUpdate(filter, updates);
     } else if (role === "student") {
-      updated = await Student.findOneAndUpdate(filter, updates, {
-        new: true,
-        runValidators: true,
-      });
+      updated = await Student.findOneAndUpdate(filter, updates);
     } else if (role === "teacher") {
-      updated = await Teacher.findOneAndUpdate(filter, updates, {
-        new: true,
-        runValidators: true,
-      });
-
-      await Salary.findByIdAndUpdate(filter, updates, {
-        new: true,
-        runValidators: true,
-      });
+      updated = await Teacher.findOneAndUpdate(filter, updates);
 
       if (updates.salary && updated) {
         const confirmed = updates.confirmed || 0;
-        const bonus = updates.bonus || 0;
-        const fine = updates.fine || 0;
+        const lessonCount = updates.class
+          ? updates.class.reduce(
+              (total, cls) => total + (cls.lessonCount || 0),
+              0
+            )
+          : 0;
+
+        const salaryDoc = await Salary.findOne({ _id: updated._id });
+
+        const bonusArray = salaryDoc?.bonus || [];
+        const fineArray = salaryDoc?.fine || [];
+
+        const bonus = bonusArray.reduce((acc, b) => acc + (b.amount || 0), 0);
+        const fine = fineArray.reduce((acc, f) => acc + (f.amount || 0), 0);
+
         const salaryAmount = updates.salary.amount;
         const salaryType = updates.salary.salaryType;
 
         let totalSalary = 0;
         if (salaryType === "Monthly") {
-          totalSalary = salaryAmount + bonus;
+          totalSalary = salaryAmount + bonus - fine;
         } else if (salaryType === "Hourly") {
-          totalSalary = salaryAmount * confirmed + bonus;
+          totalSalary = salaryAmount * confirmed + bonus - fine;
         } else if (salaryType === "Weekly") {
           const weeks = Math.ceil(confirmed / 5);
-          totalSalary = salaryAmount * weeks + bonus;
+          totalSalary = salaryAmount * weeks + bonus - fine;
         } else if (salaryType === "Yearly") {
           const months = Math.ceil(confirmed / 20);
-          totalSalary = (salaryAmount / 12) * months + bonus;
+          totalSalary = (salaryAmount / 12) * months + bonus - fine;
         }
+
         await Salary.findOneAndUpdate(
           { _id: updated._id },
           {
             salary: salaryAmount,
             salaryType: salaryType,
             totalSalary: totalSalary,
-          },
-          { new: true, runValidators: true }
+            confirmed: confirmed,
+            lessonCount: lessonCount,
+          }
         );
       }
     } else {
@@ -201,19 +220,24 @@ const deleteUser = async (req, res) => {
 
     if (role === "admin") {
       deleted = await Admin.findOneAndDelete(filter);
+      if (deleted) {
+        await User.findOneAndDelete({ _id: deleted.userId });
+      }
     } else if (role === "student") {
       deleted = await Student.findOneAndDelete(filter);
+      if (deleted) {
+        await User.findOneAndDelete({ _id: deleted.userId });
+      }
     } else if (role === "teacher") {
       deleted = await Teacher.findOneAndDelete(filter);
-
       if (deleted) {
-        await Salary.findOneAndDelete({ _id: deleted._id });
+        await User.findOneAndDelete({ _id: deleted._id });
+        await Salary.findOneAndDelete({ teacherId: deleted._id });
+        await Lesson.deleteMany({ teacherId: deleted._id });
       }
     } else {
       return res.status(400).send("Invalid role");
     }
-
-    await User.findOneAndDelete(filter);
 
     if (!deleted) return res.status(404).send("User not found");
 

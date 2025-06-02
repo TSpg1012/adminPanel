@@ -44,7 +44,7 @@ date.setHours(5, 0, 0, 0);
 
 //0 0 * * 1
 //* * * * *
-cron.schedule("* * * * *", async () => {
+cron.schedule("0 0 * * 1", async () => {
   console.log("salam");
 
   // const now = moment().tz("Asia/Baku");
@@ -148,14 +148,14 @@ cron.schedule("* * * * *", async () => {
     console.log("Keçmiş həftənin dərsləri növbəti həftəyə kopyalandı.");
   } catch (error) {
     console.error("Cron Error:", error);
-  }finally {
+  } finally {
     const message = `New weeks' lesson added`;
-    
-        await Notification.create({
-         type: "adminMessage",
-         target: "all",
-         message,
-        });
+
+    await Notification.create({
+      type: "adminMessage",
+      target: "all",
+      message,
+    });
   }
 });
 
@@ -210,18 +210,18 @@ const addLesson = async (req, res) => {
 
     const message = `New lesson added: ${className}`;
 
-    const io = req.app.get("io");
-    io.emit("lesson:added", {
-      message,
-      target: "admin",
-      lesson: lesson,
-    });
+    // const io = req.app.get("io");
+    // io.emit("lesson:added", {
+    //   message,
+    //   target: "admin",
+    //   lesson: lesson,
+    // });
 
-    await Notification.create({
-      type: "adminMessage",
-      target: "admin",
-      message,
-    });
+    // await Notification.create({
+    //   type: "adminMessage",
+    //   target: "admin",
+    //   message,
+    // });
 
     res.status(201).json({
       message: "Lesson added",
@@ -327,17 +327,17 @@ const editLesson = async (req, res) => {
       });
     }
 
-    io.emit("lesson:statusChanged", {
-      message: `The status of the lesson has changed to '${newStatus}'`,
-      lessonId: updatedLesson._id,
-      oldStatus,
-      newStatus,
-      teacherName: updatedLesson.teacherName,
-      className: updatedLesson.className,
-      date: updatedLesson.date,
-      time: updatedLesson.time,
-      target: "teacher",
-    });
+    // io.emit("lesson:statusChanged", {
+    //   message: `The status of the lesson has changed to '${newStatus}'`,
+    //   lessonId: updatedLesson._id,
+    //   oldStatus,
+    //   newStatus,
+    //   teacherName: updatedLesson.teacherName,
+    //   className: updatedLesson.className,
+    //   date: updatedLesson.date,
+    //   time: updatedLesson.time,
+    //   target: "teacher",
+    // });
 
     return res.status(200).json({
       message: `Lesson updated by ${role}`,
