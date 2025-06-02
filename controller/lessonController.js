@@ -44,11 +44,9 @@ date.setHours(5, 0, 0, 0);
 
 //0 0 * * 1
 //* * * * *
-<<<<<<< Updated upstream
+
 cron.schedule("0 0 * * 1", async () => {
-=======
-cron.schedule("0 0 * * *", async () => {
->>>>>>> Stashed changes
+
   console.log("salam");
 
   // const now = moment().tz("Asia/Baku");
@@ -221,11 +219,11 @@ const addLesson = async (req, res) => {
     //   lesson: lesson,
     // });
 
-    // await Notification.create({
-    //   type: "adminMessage",
-    //   target: "admin",
-    //   message,
-    // });
+    await Notification.create({
+       type: "adminMessage",
+       target: "admin",
+       message,
+    });
 
     res.status(201).json({
       message: "Lesson added",

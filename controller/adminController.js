@@ -15,19 +15,19 @@ const mongoose = require("mongoose");
 //   console.log("Index dropped!");
 // })();
 
-(async () => {
-  try {
-    await mongoose.connect(
-      "mongodb+srv://Seid:seid2004@cluster0.smx8fnk.mongodb.net/Etinify?retryWrites=true&w=majority&appName=Cluster0"
-    );
-    const collection = mongoose.connection.collection("Students");
-    await collection.dropIndex("id_1");
-    console.log("✅ Index 'id_1' dropped");
-    await mongoose.disconnect();
-  } catch (err) {
-    console.error("❌", err.message);
-  }
-})();
+// (async () => {
+//   try {
+//     await mongoose.connect(
+//       "mongodb+srv://Seid:seid2004@cluster0.smx8fnk.mongodb.net/Etinify?retryWrites=true&w=majority&appName=Cluster0"
+//     );
+//     const collection = mongoose.connection.collection("Students");
+//     await collection.dropIndex("id_1");
+//     console.log("✅ Index 'id_1' dropped");
+//     await mongoose.disconnect();
+//   } catch (err) {
+//     console.error("❌", err.message);
+//   }
+// })();
 
 // 
 

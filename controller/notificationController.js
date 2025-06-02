@@ -23,7 +23,7 @@ const createNotification = async (req, res) => {
   }
 };
 
-const getNotifications = async (req, res) => {
+/*const getNotifications = async (req, res) => {
   try {
     const { target } = req.query;
 
@@ -57,6 +57,53 @@ const getNotifications = async (req, res) => {
         { $set: { isRead: true } }
       );
     }
+  } catch (err) {
+    console.error("Error retrieving notifications:", err);
+    res.status(500).send("Server error");
+  }
+};*/
+
+let calledOnce = new Set();
+
+const getNotifications = async (req, res) => {
+  try {
+    const { target } = req.query;
+
+    let searchCriteria = {};
+    if (target) {
+      searchCriteria.target = target;
+    }
+
+    const unreadNotifications = await Notification.find({
+      ...searchCriteria,
+      isRead: false
+    }).sort({ createdAt: -1 });
+
+    const readNotifications = await Notification.find({
+      ...searchCriteria,
+      isRead: true
+    }).sort({ createdAt: -1 });
+
+    const formattedNotifications = [{
+      unread: unreadNotifications,
+      read: readNotifications,
+    }];
+
+    res.status(200).json(formattedNotifications);
+
+    if (target && calledOnce.has(target)) {
+      if (unreadNotifications.length > 0) {
+        const unreadIds = unreadNotifications.map(n => n._id);
+
+        await Notification.updateMany(
+          { _id: { $in: unreadIds } },
+          { $set: { isRead: true } }
+        );
+      }
+    } else if (target) {
+      calledOnce.add(target);
+    }
+
   } catch (err) {
     console.error("Error retrieving notifications:", err);
     res.status(500).send("Server error");
