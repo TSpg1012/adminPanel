@@ -35,11 +35,7 @@ app.set("io", io);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
 app.use("/", router);
 
-app.use(cors({
-  origin: "*", // Burada da frontend URL ola bilər (məsələn, "http://localhost:3000")
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true
-}));
+app.use(cors());
 
 const port = process.env.PORT || 3000;
 server.listen(port, () => {
