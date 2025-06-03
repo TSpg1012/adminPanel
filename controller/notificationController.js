@@ -12,7 +12,7 @@ const createNotification = async (req, res) => {
       userId,
       type,
       target,
-      isRead: false,
+      readBy: [],
     });
 
     await newNotification.save();
@@ -63,8 +63,6 @@ const createNotification = async (req, res) => {
   }
 };*/
 
-let calledOnce = new Set();
-
 const getNotifications = async (req, res) => {
   try {
     const { target } = req.query;
@@ -76,64 +74,36 @@ const getNotifications = async (req, res) => {
 
     const unreadNotifications = await Notification.find({
       ...searchCriteria,
-      isRead: false
+      isRead: false,
     }).sort({ createdAt: -1 });
 
     const readNotifications = await Notification.find({
       ...searchCriteria,
-      isRead: true
+      isRead: true,
     }).sort({ createdAt: -1 });
 
-    const formattedNotifications = [{
-      unread: unreadNotifications,
-      read: readNotifications,
-    }];
-
-    res.status(200).json(formattedNotifications);
-
-    if (target && calledOnce.has(target)) {
-      if (unreadNotifications.length > 0) {
-        const unreadIds = unreadNotifications.map(n => n._id);
-
-        await Notification.updateMany(
-          { _id: { $in: unreadIds } },
-          { $set: { isRead: true } }
-        );
-      }
-    } else if (target) {
-      calledOnce.add(target);
-    }
-
+    res.status(200).json([{ unread: unreadNotifications, read: readNotifications }]);
   } catch (err) {
     console.error("Error retrieving notifications:", err);
     res.status(500).send("Server error");
   }
 };
 
-const updateNotification = async (req, res) => {
+const markAllNotificationsAsRead = async (req, res) => {
   try {
-    const notificationID = req.params.id;
+    const { target } = req.body;
 
-    const existingNotification = await Notification.findById(notificationID);
-    if (!existingNotification) {
-      return res.status(404).send({ message: "Notification not found" });
-    }
+    if (!target) return res.status(400).json({ message: "Target is required" });
 
-    const updatedNotification = await Notification.findOneAndUpdate(
-      { _id: existingNotification._id },
-      req.body,
-      { new: true }
+    await Notification.updateMany(
+      { target, isRead: false },
+      { $set: { isRead: true } }
     );
 
-    res.status(200).send({
-      message: "Notification updated successfully",
-      updatedNotification,
-    });
+    res.status(200).json({ message: "All notifications marked as read" });
   } catch (err) {
-    res.status(500).send({
-      message: "Error updating notification",
-      error: err.message,
-    });
+    console.error("Error marking notifications as read:", err);
+    res.status(500).send("Server error");
   }
 };
 
@@ -157,6 +127,6 @@ const deleteNotification = async (req, res) => {
 module.exports = {
   createNotification,
   getNotifications,
-  updateNotification,
+  markAllNotificationsAsRead,
   deleteNotification,
 };

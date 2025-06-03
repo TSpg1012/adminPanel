@@ -20,7 +20,10 @@ const notificationSchema = new mongoose.Schema(
         "resultPosted",
         "teacher_added",  
         "student_added",
-        "admin_added"
+        "admin_added",
+        "class_added",
+        "class_update",
+        "class_delete"
       ],
       required: true,
     },

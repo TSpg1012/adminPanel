@@ -1,4 +1,5 @@
 const Classes = require("../models/classesModel");
+const Notification = require("../models/notificationModel");
 
 const addClass = async(req,res)=>{
     const{className,classId} = req.body
@@ -24,6 +25,15 @@ const addClass = async(req,res)=>{
         });
 
         await newClass.save();
+
+        const notification = new Notification({
+            message: `New class create: ${newClass.className}`,
+            target: "all",
+            type: "class_added",
+            isRead: false,
+          });
+          await notification.save();
+
         return res
         .status(201)
         .json({ message: "Class created successfully", newClass});
@@ -48,6 +58,15 @@ const updateClass = async (req, res) => {
             { new: true }
         );
 
+        const notification = new Notification({
+            message: `Update class: ${updatedClass.className}`,
+            target: "admin",
+            type: "class_update",
+            isRead: false,
+          });
+        
+        await notification.save();
+
         return res.status(200).json({ message: "Class updated successfully", updatedClass });
     } catch (err) {
         console.error("Error updating class:", err);
@@ -67,7 +86,7 @@ const getAllClasses = async (req, res) => {
 
 const deleteClass = async (req, res) => {
     try {
-        const reqId = parseInt(req.params.id);
+        const reqId = req.params.id;
         const classes = await Classes.findOne({ classId: reqId });  
         
 
@@ -76,6 +95,14 @@ const deleteClass = async (req, res) => {
         }
 
         const deletedClass = await Classes.findOneAndDelete({ _id: classes._id });
+
+        const notification = new Notification({
+            message: `Delete class: ${deletedClass.className}`,
+            target: "admin",
+            type: "class_delete",
+            isRead: false,
+          });
+        await notification.save();
 
         return res.status(200).json({ message: "Class deleted successfully" });
     } catch (err) {

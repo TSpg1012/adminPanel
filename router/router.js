@@ -53,14 +53,8 @@ router.get("/available-students", lessonController.getAvailableStudents);
 
 router.post("/notifications/add", notificationController.createNotification);
 router.get("/notifications", notificationController.getNotifications);
-router.delete(
-  "/notifications/delete/:id",
-  notificationController.deleteNotification
-);
-router.put(
-  "/notifications/update/:id",
-  notificationController.updateNotification
-);
+router.delete("/notifications/delete/:id", notificationController.deleteNotification);
+router.post("/notifications/markAllAsRead", notificationController.markAllNotificationsAsRead);
 
 router.get("/salary", salaryController.getSalaries);
 
